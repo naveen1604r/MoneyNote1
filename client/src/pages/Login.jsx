@@ -1,0 +1,190 @@
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Mail, Lock, Eye, EyeOff, Sun, Moon, ArrowRight } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
+import Button from '../components/common/Button';
+import Toast from '../components/common/Toast';
+import MoneyNoteLogo from '../components/common/MoneyNoteLogo';
+
+const Login = () => {
+  const navigate = useNavigate();
+  const { isDarkMode, toggleTheme } = useTheme();
+  const { login } = useAuth();
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const validateForm = () => {
+    if (!email.trim()) {
+      setErrorMessage('Please enter your email address.');
+      return false;
+    }
+    const emailRegex = /^\S+@\S+\.\S+$/;
+    if (!emailRegex.test(email)) {
+      setErrorMessage('Please enter a valid email address.');
+      return false;
+    }
+    if (!password) {
+      setErrorMessage('Please enter your password.');
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setErrorMessage('');
+
+    if (!validateForm()) return;
+
+    setIsSubmitting(true);
+
+    try {
+      const result = await login(email, password);
+      if (result.success) {
+        navigate('/dashboard');
+      } else {
+        setErrorMessage(result.message || 'Incorrect email or password.');
+      }
+    } catch (err) {
+      setErrorMessage('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-slate-50 dark:bg-slate-900 transition-colors duration-200">
+      {/* Floating Theme Toggle */}
+      <button
+        onClick={toggleTheme}
+        className="fixed top-4 right-4 p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 shadow-sm hover:shadow transition-all"
+        title="Toggle Theme"
+      >
+        {isDarkMode ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-slate-600" />}
+      </button>
+
+      <div className="w-full max-w-md space-y-6">
+        {/* Brand Header */}
+        <div className="text-center flex flex-col items-center">
+          <div className="mb-4">
+            <MoneyNoteLogo size="lg" clickable={false} />
+          </div>
+          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            Welcome back
+          </h1>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 font-medium">
+            Manage your money smarter.
+          </p>
+        </div>
+
+        {/* Login Form Card */}
+        <div className="p-8 rounded-3xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/70 shadow-soft-lg space-y-5">
+          {errorMessage && (
+            <Toast
+              type="error"
+              message={errorMessage}
+              onClose={() => setErrorMessage('')}
+            />
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 uppercase tracking-wider">
+                Email Address
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3.5 top-3 w-5 h-5 text-slate-400" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (errorMessage) setErrorMessage('');
+                  }}
+                  placeholder="name@example.com"
+                  disabled={isSubmitting}
+                  className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-primary focus:outline-none transition-all disabled:opacity-50"
+                />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                  Password
+                </label>
+                <a
+                  href="#forgot"
+                  onClick={(e) => e.preventDefault()}
+                  className="text-xs text-primary font-medium hover:underline"
+                >
+                  Forgot password?
+                </a>
+              </div>
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-3 w-5 h-5 text-slate-400" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (errorMessage) setErrorMessage('');
+                  }}
+                  placeholder="••••••••"
+                  disabled={isSubmitting}
+                  className="w-full pl-11 pr-11 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-sm focus:ring-2 focus:ring-primary focus:outline-none transition-all disabled:opacity-50"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                  title={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center pt-1">
+              <input
+                id="remember_me"
+                type="checkbox"
+                className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary"
+              />
+              <label htmlFor="remember_me" className="ml-2 text-xs text-slate-600 dark:text-slate-400">
+                Remember me
+              </label>
+            </div>
+
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              isLoading={isSubmitting}
+              disabled={isSubmitting}
+              className="w-full mt-2"
+              icon={ArrowRight}
+              iconPosition="right"
+            >
+              Sign In
+            </Button>
+          </form>
+
+          <div className="mt-6 text-center text-xs text-slate-500 dark:text-slate-400">
+            Don't have an account?{' '}
+            <Link to="/register" className="font-semibold text-primary hover:underline">
+              Create account
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Login;
